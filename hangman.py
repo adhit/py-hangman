@@ -1,55 +1,65 @@
 import re
+import os
+import hangmandrawer as hangmandrawer
 
-global_secret_word = "super cali fragilistic expiali docious"
-global_mistakes_allowed = 10
+class Hangman:
+	secret_word = ""
+	mistakes_allowed = 7
 
-def play():
-	global global_secret_word
-	secret_word = global_secret_word
-	guessed_word = re.sub('[^ ]', '?', secret_word)
+	'Game State'
+	guessed_word = ""
 	wrong_guesses = set([])
-	while not has_game_finished(guessed_word, wrong_guesses):
+
+	def __init__(self):
+		print "------- Initializing Hangman Game -------"
+		self.secret_word = raw_input("The secret word: ")
+
+		self.guessed_word = re.sub('[^ ]', '?', self.secret_word)
+		self.wrong_guesses = set([])
+
+	def play(self):
+		while not self.has_game_finished():
+			self.print_game_state()
+			guess = raw_input("Your guess (a char): ")
+			self.apply_game_state_changes(guess[0])
+
+		os.system('clear')
 		print "--------------------------------------------------"
-		print guessed_word
-		print "Wrong guesses ({0}): {1}".format(len(wrong_guesses), ', '.join(sorted(wrong_guesses)))
+		if self.has_game_lost():
+			print "YOU LOST"
+		elif self.has_game_won():
+			print "YOU WON"
+		hangmandrawer.print_hangman(len(self.wrong_guesses))
 
-		guess = raw_input("Your guess (a char): ")
-		if guess:
-			guess_char = guess[0]
-		else:
-			guess_char = ''
-		if re.match("[a-z]", guess_char) is None:
-			print "ERROR: Please input a char!"
-			continue
+	def print_game_state(self):
+		os.system('clear')
+		print "--------------------------------------------------"
+		print self.guessed_word
+		print "Wrong guesses ({0}): {1}".format(len(self.wrong_guesses), ', '.join(sorted(self.wrong_guesses)))
+		hangmandrawer.print_hangman(len(self.wrong_guesses))
 
+	def apply_game_state_changes(self, guess_char):
 		valid_guess = False
 		new_word = ""
-		for i in range(0, len(secret_word)):
-			if secret_word[i] == guess_char:
-				new_word = new_word + secret_word[i]
+		for i in range(0, len(self.secret_word)):
+			if self.secret_word[i] == guess_char:
+				new_word = new_word + self.secret_word[i]
 				valid_guess = True
 			else:
-				new_word = new_word + guessed_word[i]
+				new_word = new_word + self.guessed_word[i]
 
 		if not valid_guess:
-			wrong_guesses = wrong_guesses.union(guess_char)
+			self.wrong_guesses = self.wrong_guesses.union(guess_char)
 		else:
-			guessed_word = new_word
+			self.guessed_word = new_word
 
-	if has_game_lost(wrong_guesses):
-		print "YOU LOST"
-	elif has_game_won(guessed_word):
-		print "YOU WON"
+	def has_game_finished(self):
+		return self.has_game_lost() or self.has_game_won()
 
-def has_game_finished(guessed_word, wrong_guesses):
-	return has_game_lost(wrong_guesses) or has_game_won(guessed_word)
+	def has_game_lost(self):
+		return len(self.wrong_guesses) > self.mistakes_allowed
 
-def has_game_lost(wrong_guesses):
-	global global_mistakes_allowed
-	return len(wrong_guesses) > global_mistakes_allowed
+	def has_game_won(self):
+		return self.guessed_word == self.secret_word
 
-def has_game_won(guessed_word):
-	global global_secret_word
-	return guessed_word == global_secret_word
-
-play()
+Hangman().play()
